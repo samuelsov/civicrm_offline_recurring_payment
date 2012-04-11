@@ -1,0 +1,65 @@
+// $Id: INSTALL.txt,v 1.0 2011/05/16 12:05:45 posco Exp $
+
+==========================================
+CiviCRM Offline Recurring Payments  
+==========================================
+
+Requirements
+---------------------------------------------
+
+This module requires CiviCRM 3.3.x or greater and Drupal 6.x.
+
+Installation Instructions
+---------------------------------------------
+
+To install the CiviCRM Offline Recurring Payments Module, move the 
+`civicrm_offline_recurring_payment` directory to your sites `modules/` directory.
+
+Before enabling the module, you need to import the Custom data structure used for the Courses.
+
+Enable the Module
+---------------------------------------------
+
+Navigate to Drupal > Administer > Site building > Modules and enable the CiviCRM Offline Recurring Payments Module.
+
+Refer to the Drupal documentation for further information on how to install modules.
+
+And give neccessary permission to the module.
+
+Rebuild Menus
+---------------------------------------------
+
+In order to make the module work, you need to rebuild the menus.
+
+The following URL (replace the relevant parts with your credentials) should rebuild the menus.
+
+http://[your_root_url]/index.php?q=civicrm/menu/rebuild&reset=1
+
+How to Use
+---------------------------------------------
+                                
+This module is intended for setting up Offline Recurring Payments for a contact.
+
+If you navigate to the contribution tab of any contact, you will be able to see the section at the bottom of the page to view and set up recurring payments for the contact.
+
+When setting up a recurring payment, you will be able to enter the amount, frequency interval, frequency unit, start date and next collection date. 
+
+Next collection date is the date, the actual contribution record (of status 'Pending') will be created for the recurring payment (by the background process). If you want the first contribution on the start date, next collection date should be same as start date. Once the payment is received, the contribution status can be changed to 'Completed'.    
+
+Please note: this module doesnt support installments in recurring payments, but the end date is used to end the recurring payment. If the end date is null, then the recurring payment is considered as on-going.
+
+
+Setting Up Cron Job
+---------------------------------------------
+
+The CiviCRM Offline Recurring Payments module comes with a cron job, which can be used to create the actual contribution record for the recurring payments set up.
+
+Move the file 'ProcessRecurringContributions.php' under bin directory to your `sites/all/modules/civicrm/bin` directory.
+
+Set up the cron job to trigger the script for once in a day or you can run the script in your browser using the following URL (replace the relevant parts with your credentials).
+
+http://[your_root_url]/sites/all/modules/civicrm/bin/ProcessRecurringContributions.php
+
+Please note: the script creates the contribution record for the contact on the next scheduled date. Once the contribution record is created, the next scheduled date will be moved to a future date, according to the frequency interval and unit of the recurring payment.
+
+If the end date is set, then the script will not create any contribution record for the recurring payment, considering the recurring payment has ended.

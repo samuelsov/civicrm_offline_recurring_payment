@@ -1,0 +1,108 @@
+<?php
+
+/*
+ +--------------------------------------------------------------------+
+ | CiviCRM version 3.3                                                |
+ +--------------------------------------------------------------------+
+ | Copyright CiviCRM LLC (c) 2004-2010                                |
+ +--------------------------------------------------------------------+
+ | This file is a part of CiviCRM.                                    |
+ |                                                                    |
+ | CiviCRM is free software; you can copy, modify, and distribute it  |
+ | under the terms of the GNU Affero General Public License           |
+ | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
+ |                                                                    |
+ | CiviCRM is distributed in the hope that it will be useful, but     |
+ | WITHOUT ANY WARRANTY; without even the implied warranty of         |
+ | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
+ | See the GNU Affero General Public License for more details.        |
+ |                                                                    |
+ | You should have received a copy of the GNU Affero General Public   |
+ | License and the CiviCRM Licensing Exception along                  |
+ | with this program; if not, contact CiviCRM LLC                     |
+ | at info[AT]civicrm[DOT]org. If you have questions about the        |
+ | GNU Affero General Public License or the licensing of CiviCRM,     |
+ | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ +--------------------------------------------------------------------+
+*/
+
+/**
+ *
+ * @package CRM
+ * @copyright CiviCRM LLC (c) 2004-2010
+ * $Id$
+ *
+ */
+
+function civicrm_offline_recurring_payment_civicrm_config( &$config ) {
+    $template =& CRM_Core_Smarty::singleton( );
+    
+    $ddRoot = dirname( __FILE__ );
+    
+    $ddDir = $ddRoot . DIRECTORY_SEPARATOR . 'templates';
+    
+    if ( is_array( $template->template_dir ) ) {
+        array_unshift( $template->template_dir, $ddDir );
+    } else {
+        $template->template_dir = array( $ddDir, $template->template_dir );
+    }
+    
+    // also fix php include path
+    $include_path = $ddRoot . PATH_SEPARATOR . get_include_path( );
+    set_include_path( $include_path );
+}
+
+function civicrm_offline_recurring_payment_perm() {
+  return array('access site-wide', 'administer site-wide');
+}
+
+function civicrm_offline_recurring_payment_civicrm_xmlMenu( &$files ) {
+    $files[] = dirname(__FILE__)."/Recurring/xml/Menu/RecurringPayment.xml";
+}
+
+/**
+ * Implementation of hook_civicrm_pageRun
+ */
+function civicrm_offline_recurring_payment_civicrm_pageRun( &$page ) {
+    $name = $page->getVar( '_name' );
+    if ($name == 'CRM_Contribute_Page_Tab') {
+    
+        $cid = CRM_Utils_Array::value('cid', $_GET, '');
+        $query = "SELECT * FROM civicrm_contribution_recur r WHERE contact_id = %1";
+        $dao = CRM_Core_DAO::executeQuery( $query , array( 1 => array( $cid   , 'String' ) ) );
+        $recurArray = array();
+        while ($dao->fetch ()) {
+            $recurArray[$dao->id]['id'] = $dao->id;
+            $recurArray[$dao->id]['amount'] = $dao->amount;
+            $recurArray[$dao->id]['frequency_unit'] = $dao->frequency_unit;
+            $recurArray[$dao->id]['frequency_interval'] = $dao->frequency_interval;
+            $recurArray[$dao->id]['start_date'] = $dao->start_date;
+            $recurArray[$dao->id]['end_date'] = $dao->end_date;
+            $recurArray[$dao->id]['next_sched_contribution'] = $dao->next_sched_contribution;
+        }
+        
+        //for contribution tabular View
+        $buildTabularView = CRM_Utils_Array::value( 'showtable', $_GET, false );
+        $page->assign( 'buildTabularView', $buildTabularView );
+        if( $buildTabularView ) return;
+        
+        $page->assign( 'isAdmin', $isAdmin );
+        $page->assign( 'recurArray', $recurArray );
+        $page->assign( 'recurArrayCount', count($recurArray) );
+    }
+}
+
+function civicrm_offline_recurring_payment_explode_trnx_id($trxn_id) {
+  // because the table civicrm_contribution_recurring doesn't allow campaign and other important data - need to change core
+  // trxn_id = num::campaign_id::contrib_type_id::instrument_id
+
+  $exp = '';
+  $exp = explode("::", $dao->trxn_id);
+
+  return array(
+    'trxn_id' => isset($exp[0]) ? $exp[0] : NULL,
+    'campaign_id' => isset($exp[1]) ? $exp[1] : NULL,
+    'contribution_type_id'=> isset($exp[2]) ? $exp[2] : NULL,
+    'payment_instrument_id'=> isset($exp[3]) ? $exp[3] : NULL,
+  );
+}
